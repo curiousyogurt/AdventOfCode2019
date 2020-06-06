@@ -1,7 +1,8 @@
 ;;;;
 ;;;; Advent of Code 2019: Day 1, Part 2
 ;;;; https://adventofcode.com/2019/day/1
-;;;; Day 1: The Tyranny of the Rocket Equation
+;;;;
+;;;; The Tyranny of the Rocket Equation
 ;;;;
 (ns day1b.ns
   (:require [clojure.string :as str]))
