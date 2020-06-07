@@ -9,7 +9,7 @@
   (:require [clojure.set :as set]))
 
 ;;;
-;;; Load in the data for the problem as wire1 and wire2
+;;; Load in the data for the problem from file as puzzle-wires.
 ;;;
 (defn get-file
   [source]
@@ -26,6 +26,9 @@
 
 (def puzzle-wires (wires-from-file "resources/day3.txt"))
 
+;;;
+;;; Load in examples from problem statement (given as strings).
+;;;
 (defn wire-from-string
   [string]
   (mapv parse (re-seq #"[\w\d.]+" string)))
