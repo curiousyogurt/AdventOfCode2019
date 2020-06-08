@@ -97,31 +97,6 @@
           [[0 0]] wire))
 
 ;;;
-;;; Calculate Manhattan Distance from the origin, either given an ordered pair
-;;; as a list, or given two separate inputs.
-;;;
-(defn manhattan-distance
-  ([coordinates]
-   (+ (Math/abs (first coordinates)) (Math/abs (second coordinates))))
-  ([x y]
-   (+ (Math/abs x) (Math/abs y))))
-
-;;;
-;;; Calculate path1 (for wire1) and path2 (for wire 2).  This will give us
-;;; every coördinate for the wires, in order.  Since both start at [0 0],
-;;; eliminate the last element of both lists, and convert to sets.  This
-;;; allows us to use the intersection function to create a set of only
-;;; overlapping coördinates.  Then, calculate the Manhattan distance for each
-;;; intersection and sort distances.
-;;;
-(defn intersection-distances
-  [wires]
-  (let [path1 (into #{} (butlast (follow (first wires))))
-        path2 (into #{} (butlast (follow (second wires))))
-        intersections (set/intersection path1 path2)]
-    (sort (first (vector (map manhattan-distance intersections))))))
-
-;;;
 ;;; Instead of intersection-distances (from Part One), we just need the
 ;;; intersections.  Given a pair of wires, calculate path1 (for wire1) and
 ;;; path2 (for wire 2).  This will give us every coördinate for the wires,
@@ -142,13 +117,13 @@
 ;;; but my first attempt was to recur the path until the coordinates were
 ;;; found.  I include step-slow for reference only.
 ;;;
-(defn steps-slow
-  [path coordinate]
-  (loop [path path
-         steps 1]
-    (if (= (last path) coordinate)
-      steps
-      (recur (butlast path) (inc steps)))))
+;;; (defn steps-slow
+;;;  [path coordinate]
+;;;  (loop [path path
+;;;         steps 1]
+;;;    (if (= (last path) coordinate)
+;;;      steps
+;;;      (recur (butlast path) (inc steps)))))
 
 ;;;
 ;;; In order to find the position in the path of a particular pair of
