@@ -1,10 +1,10 @@
 ;;;;
-;;;; Advent of Code 2019: Day 3, Part Two
+;;;; Advent of Code 2019: Day 3, Part 2
 ;;;; https://adventofcode.com/2019/day/3
 ;;;;
 ;;;; Crossed Wires
 ;;;;
-(ns day3a.ns
+(ns day3b.ns
   (:require [clojure.string :as str])
   (:require [clojure.set :as set]))
 
