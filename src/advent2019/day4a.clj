@@ -11,7 +11,7 @@
 ;;;
 ;;; Given an integer, break it into its constituent digits.  Convert to a
 ;;; string with `(str number)`, then use a nifty trick of ASCII codes (I think
-;;; credit for this trick goes to whomever wrote a certain program in the
+;;; credit for this trick goes to whoever wrote a certain program in the
 ;;; user manual for the Commodore VIC-20; there was a similar trick there
 ;;; using ASCII math: subtract the ASCII value of the number in question
 ;;; from the ASCII value for \0 (which is 48), and you get the digit itself.
@@ -57,7 +57,7 @@
 
 ;;;
 ;;; Recurse through all possible passwords, storing all potentially correct
-;;; passowrds in a vector.
+;;; passwords in a vector.
 ;;;
 (defn passwords
   [lower upper]
