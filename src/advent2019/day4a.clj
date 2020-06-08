@@ -23,6 +23,10 @@
   (map #(- (int %) (int \0))
        (str number)))
 
+;;;
+;;; Step through digits of `number` and determine whether they meet the
+;;; increase-or-stay-the-same criterion.
+;;;
 (defn increase?
   [number]
   (let [n (breakout number)]
@@ -33,6 +37,10 @@
         (first (next (next (next (next n)))))
         (first (next (next (next (next (next n)))))))))
 
+;;;
+;;; Step through the digits of `number` and detremine hethre they meet the
+;;; at-least-two-the-same criterior.
+;;;
 (defn adjacents?
   [number]
   (let [n (breakout number)]
@@ -47,6 +55,10 @@
         (= (first (next (next (next (next n)))))
            (first (next (next (next (next (next n))))))))))
 
+;;;
+;;; Recurse through all possible passwords, storing all potentially correct
+;;; passowrds in a vector.
+;;;
 (defn passwords
   [lower upper]
   (reduce (fn [passwords candidate]
@@ -55,4 +67,8 @@
               passwords))
           [] (range lower upper)))
 
+;;;
+;;; Perform the calculation by count the number of potentially correct
+;;; passwords.
+;;;
 (count (passwords (first puzzle-input) (second puzzle-input)))
