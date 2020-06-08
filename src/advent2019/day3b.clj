@@ -62,7 +62,7 @@
 ;;;
 ;;; Produce a trail of breadcrums for one move.  Define move as a list with two
 ;;; elements: a direction, and a distance.  This is analogous to the convention
-;;; in thet data.  So '("R" 8) means move right 8 units.
+;;; in thet data.  So ["R" 8] means move right 8 units.
 ;;;
 ;;; The breadcrumbs are the sequence of coordinates that allsowm us to realise
 ;;; the path.  For example, [[2 0] [1 0] [0 0]] means that we started at '(0 0)
