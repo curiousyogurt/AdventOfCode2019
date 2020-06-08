@@ -111,7 +111,7 @@
 ;;; every coördinate for the wires, in order.  Since both start at '(0 0),
 ;;; eliminate the last element of both lists, and convert to sets.  This
 ;;; allows us to use the intersection function to create a set of only
-;;; overlapping coordinates.  Then, calculate the Manhattan distance for each
+;;; overlapping coördinates.  Then, calculate the Manhattan distance for each
 ;;; intersection and sort distances.
 ;;;
 (defn intersection-distances
@@ -121,13 +121,28 @@
         intersections (set/intersection path1 path2)]
     (sort (first (vector (map manhattan-distance intersections))))))
 
+;;;
+;;; Instead of intersection-distances (from Part One), we just need the
+;;; intersections.  Given a pair of wires, calculate path1 (for wire1) and
+;;; path2 (for wire 2).  This will give us every coördinate for the wires,
+;;; in order.  Since both start at [0 0], eliminate the last element of
+;;; both lists, and convert to sets.  This allows us to use the intersection
+;;; function to create a set of only overlapping coördinates.
+;;;
 (defn intersections
   [wires]
   (let [path1 (into #{} (butlast (follow (first wires))))
         path2 (into #{} (butlast (follow (second wires))))]
     (set/intersection path1 path2)))
 
-(defn steps-1
+;;;
+;;; This was my first implementation of the steps function (see below).  It
+;;; did the job, but was impossibly slow.  What we want to do is get the index
+;;; of a particular element.  It is easy enough to do this with a single line,
+;;; but my first attempt was to recur the path until the coordinates were
+;;; found.  I include step-slow for reference only.
+;;;
+(defn steps-slow
   [path coordinate]
   (loop [path path
          steps 1]
@@ -135,18 +150,30 @@
       steps
       (recur (butlast path) (inc steps)))))
 
+;;;
+;;; In order to find the position in the path of a particular pair of
+;;; coördinates, drop-while all the element that are not those coördinates, and
+;;; count the size of the resulting vector.
+;;;
 (defn steps
   [path coordinate]
-  (drop-while (fn [n] (not (= n coordinate))) path))
+  (count (drop-while (fn [n] (not (= n coordinate))) path)))
 
+;;;
+;;; This function does the heavy lifting for the problem.  Given a pair of
+;;; wires, calculate their paths as path1 and path2.  Then, calculate the sum
+;;; of steps to each of the intersections.  Conj the results, so that when the
+;;; results are sorted, the element in first place will be the fewest number
+;;; of steps.
+;;;
 (defn intersection-paths
   [wires]
   (let [path1 (into [] (butlast (follow (first wires))))
         path2 (into [] (butlast (follow (second wires))))]
     (reduce (fn [steps-for-intersections intersection]
               (conj steps-for-intersections
-                    (+ (count (steps path1 intersection))
-                       (count (steps path2 intersection)))))
+                    (+ (steps path1 intersection)
+                       (steps path2 intersection))))
             [] (intersections wires))))
 
 ;;;
