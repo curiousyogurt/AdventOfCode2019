@@ -1,5 +1,5 @@
 ;;;;
-;;;; Advent of Code 2019: Day 4, Part 1
+;;;; Advent of Code 2019: Day 4, Part 2
 ;;;; https://adventofcode.com/2019/day/4
 ;;;;
 ;;;; Secure Container
