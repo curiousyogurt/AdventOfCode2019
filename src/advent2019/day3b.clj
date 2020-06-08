@@ -48,7 +48,7 @@
 ;;; Given origin (as an ordered pair) and a direction (RLDU), calculate
 ;;; the destination coordinate.
 ;;;
-;;; Example: (step '(0 0) "R") ==> '(1 0)
+;;; Example: (step [0 0] "R") ==> [1 0
 ;;;
 (defn step
   [origin direction]
@@ -65,7 +65,7 @@
 ;;; in thet data.  So ["R" 8] means move right 8 units.
 ;;;
 ;;; The breadcrumbs are the sequence of coordinates that allsowm us to realise
-;;; the path.  For example, [[2 0] [1 0] [0 0]] means that we started at '(0 0)
+;;; the path.  For example, [[2 0] [1 0] [0 0]] means that we started at [0 0]
 ;;; and took 2 steps to the right (along the x axis).
 ;;;
 ;;; We can then call step to create a list of breadcrumbs recursively for the
@@ -108,7 +108,7 @@
 
 ;;;
 ;;; Calculate path1 (for wire1) and path2 (for wire 2).  This will give us
-;;; every coördinate for the wires, in order.  Since both start at '(0 0),
+;;; every coördinate for the wires, in order.  Since both start at [0 0],
 ;;; eliminate the last element of both lists, and convert to sets.  This
 ;;; allows us to use the intersection function to create a set of only
 ;;; overlapping coördinates.  Then, calculate the Manhattan distance for each
