@@ -40,21 +40,30 @@
 
 ;;;
 ;;; Step through the digits of `number` and detremine hethre they meet the
-;;; at-least-two-the-same criterior.
+;;; at-least-two-the-same criterior.  This is the old version of `adjacents?`
+;;; which we leave here for reference purposes.
+;;;
+;;;(defn adjacents?
+;;;  [number]
+;;;  (let [n (breakout number)]
+;;;    (or (= (first n)
+;;;           (first (next n)))
+;;;        (= (first (next n))
+;;;           (first (next (next n))))
+;;;        (= (first (next (next n)))
+;;;           (first (next (next (next n)))))
+;;;        (= (first (next (next (next n))))
+;;;           (first (next (next (next (next n))))))
+;;;        (= (first (next (next (next (next n)))))
+;;;           (first (next (next (next (next (next n))))))))))
+
+;;;
+;;; Return `true` if number has at least one doubled digit; otherwise, return
+;;; `false` (=`nil` on `re-find`).
 ;;;
 (defn adjacents?
   [number]
-  (let [n (breakout number)]
-    (or (= (first n)
-           (first (next n)))
-        (= (first (next n))
-           (first (next (next n))))
-        (= (first (next (next n)))
-           (first (next (next (next n)))))
-        (= (first (next (next (next n))))
-           (first (next (next (next (next n))))))
-        (= (first (next (next (next (next n)))))
-           (first (next (next (next (next (next n))))))))))
+  (boolean (re-find #"(\d)\1" (str number))))
 
 ;;;
 ;;; Recurse through all possible passwords, storing all potentially correct
