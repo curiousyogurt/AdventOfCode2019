@@ -71,9 +71,14 @@
 ;;;              passwords))
 ;;;          [] (range lower upper)))
 
+;;;
+;;; Given a range as a vector, filter based on meeting both the increase? and
+;;; the adjacents? predicates.
+;;;
 (defn passwords
   [lower upper]
-  (filter #(and (increase? %) (adjacents? %)) (range lower upper)))
+  (filter #(and (increase? %) (adjacents? %))
+          (range lower upper)))
 
 ;;;
 ;;; The additional criterion for Part 2 is that there be two adjacent
