@@ -57,15 +57,22 @@
 
 ;;;
 ;;; Recurse through all possible passwords, storing all potentially correct
-;;; passwords in a vector.
+;;; passwords in a vector.  This is the old version of the `passwords`
+;;; function, below.  It turns out to be much easier to `filter` based on a
+;;; predicate than recurse through a range with `reduce`.  We leave this 
+;;; version here for reference purposes.
 ;;;
+;;;(defn passwords
+;;;  [lower upper]
+;;;  (reduce (fn [passwords candidate]
+;;;            (if (and (increase? candidate) (adjacents? candidate))
+;;;              (conj passwords candidate)
+;;;              passwords))
+;;;          [] (range lower upper)))
+
 (defn passwords
   [lower upper]
-  (reduce (fn [passwords candidate]
-            (if (and (increase? candidate) (adjacents? candidate))
-              (conj passwords candidate)
-              passwords))
-          [] (range lower upper)))
+  (filter #(and (increase? %) (adjacents? %)) (range lower upper)))
 
 ;;;
 ;;; Perform the calculation by count the number of potentially correct
