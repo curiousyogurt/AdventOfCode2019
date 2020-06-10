@@ -19,19 +19,17 @@
 (def output 1)
 
 ;;;
-;;; Given a sequence of 4 integers, return the required operation as a function.
-;;; Opcode 1 is addition; opcode 2 is multiplication.  Any other opcode returns
-;;; nil.  These are arbitrary, and so `cond` is appropriate.
+;;; Given the opcode, return the operation as a function.  These are arbitrary,
+;;; so `cond` is appropriate.
 ;;;
 (defn op
-  [intcode position]
-  (let [opcode (get intcode position)]
-    (cond
-      (= opcode 1) +
-      (= opcode 2) *
-      (= opcode 3) input
-      (= opcode 4) output
-      :else nil)))
+  [opcode]
+  (cond
+    (= opcode 1) +
+    (= opcode 2) *
+    (= opcode 3) (fn [n] input)
+    (= opcode 4) (fn [n] output)
+    :else nil))
 
 ;;;
 ;;; Return the number of parameters requried for a given opcode.  These are
@@ -92,6 +90,8 @@
   (let [operation (parse-operation (nth intcode position))
         parameters (parse-parameters (subvec intcode (inc position) (+ (inc position) (:parameters operation))))]
     (into operation parameters)))
+
+;(instruction [1101,100,-1,4,0] 0)
 
 ;;; TODO: Finish Day 5.  Below is from Day 2.
 
