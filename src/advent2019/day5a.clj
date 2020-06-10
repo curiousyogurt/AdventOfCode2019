@@ -12,13 +12,16 @@
   (mapv read-string
         (re-seq #"[\d.]+" (slurp "resources/day5.txt"))))
 
+;;;
+;;; Arbitrary assicgnment of input and output, according to puzzle.
+;;;
 (def input 1)
 (def output 1)
 
 ;;;
 ;;; Given a sequence of 4 integers, return the required operation as a function.
 ;;; Opcode 1 is addition; opcode 2 is multiplication.  Any other opcode returns
-;;; nil.
+;;; nil.  These are arbitrary, and so `cond` is appropriate.
 ;;;
 (defn op
   [intcode position]
@@ -31,29 +34,8 @@
       :else nil)))
 
 ;;;
-;;; Given an integer, break it into its constituent digits.  Convert to a
-;;; string with `(str number)`, then use a nifty trick of ASCII codes (I think
-;;; credit for this trick goes to whoever wrote a certain program in the
-;;; user manual for the Commodore VIC-20; there was a similar trick there
-;;; using ASCII math: subtract the ASCII value of the number in question
-;;; from the ASCII value for \0 (which is 48), and you get the digit itself.
-;;; For example, \5 has an ASCII value of 53; so when we calculate 53 minus
-;;; 48, we get 5.
-;;;
-(defn breakout
-  [number]
-  (mapv #(- (int %) (int \0))
-       (str number)))
-
-;;;
-;;; If `parameter-mode` is nil, set to 0; otherwise, leave it
-;;;
-(defn coerce
-  [parameter-mode]
-  (if (nil? parameter-mode) 0 parameter-mode))
-
-;;;
-;;; Return the number of parameters requried for a given opcode
+;;; Return the number of parameters requried for a given opcode.  These are
+;;; arbitrary, and so `cond` is appropriate.
 ;;;
 (defn parameters
   [opcode]
@@ -65,31 +47,25 @@
       :else nil))
 
 ;;;
-;;; Given the intcode, a position, and the number of parameters required,
-;;; return a map of the first/second/third parameters.
-;;;
-(defn get-parameters
-  [intcode position parameters]
-  (cond
-    (= parameters 1) {:first-parameter (nth intcode (+ position 1))
-                      :second-parameter nil
-                      :third-parametr nil}
-    (= parameters 2) {:first-parameter (nth intcode (+ position 1))
-                      :second-parameter (nth intcode (+ position 2))
-                      :third-parameter nil}
-    (= parameters 3) {:first-parameter (nth intcode (+ position 1))
-                      :second-parameter (nth intcode (+ position 2))
-                      :third-parameter (nth intcode (+ position 3))}))
-
-;;;
 ;;; Given the intcode and a position, return a map of the opcode, the number
 ;;; of parameters requried, and the mode for the first/second/third parameters,
-;;; where 0 is position mode, and 1 is immediate mode.
+;;; where 0 is position mode, and 1 is immediate mode.  The following let
+;;; assignments are of interest:
 ;;;
-(defn operation
-  [intcode position]
-  (let [op (breakout (nth intcode position))
-        opcode (+ (* (last (butlast op)) 10) (last op))]
+;;; `op`: split the operation into a vector of individual digits
+;;; `last-op`: pick out the last two digits of op
+;;; `opcode`: convert last-op to an integer
+;;; `coerce`: (fn) corverts a nil parameter to 0
+;;;
+;;; The output of this function is a map with the parsed operation.  use this
+;;; together with `parse-parameters` to generate a map of the instruction.
+;;;
+(defn parse-operation
+  [operation]
+  (let [op (mapv #(- (int %) (int \0)) (str operation))
+        last-op (str (last (butlast op)) (last op))
+        opcode (Integer/parseInt (first (re-find #"(\d){1,2}$" last-op)))
+        coerce #(if (nil? %) 0 %)]
     {:opcode opcode
      :parameters (parameters opcode)
      :first-parameter-mode (coerce (last (butlast (butlast op))))
@@ -97,17 +73,27 @@
      :third-parameter-mode (coerce (last (butlast (butlast (butlast (butlast op))))))}))
 
 ;;;
-;;; Given the intcode and a position, return a map of the operation (opcode,
-;;; number of parameters requried, mode for first/second/third parameters and
-;;; the first/second/third parameters.
+;;; Given the parameters, create a map.  Use this together with `parse-
+;;; operation` to generate a map of the instruction.
+;;;
+(defn parse-parameters
+  [parameters]
+  {:first-parameter (first parameters)
+   :second-parameter (first (next parameters))
+   :third-parameter (first (next (next parameters)))})
+
+;;;
+;;; Given the intcode and a position, return a map of the instruction (opcode,
+;;; number of parameters, mode for first/second/third parameters and the first/
+;;; second/third parameters.
 ;;;
 (defn instruction
   [intcode position]
-  (let [op (operation intcode position)
-        parameters (get-parameters intcode position (:parameters op))]
-    (into op parameters)))
+  (let [operation (parse-operation (nth intcode position))
+        parameters (parse-parameters (subvec intcode (inc position) (+ (inc position) (:parameters operation))))]
+    (into operation parameters)))
 
-(instruction [1002 4 3 4 33] 0)
+;;; TODO: Finish Day 5.  Below is from Day 2.
 
 ;;;
 ;;; Pull an individual instruction (4 integers) from the intcode, starting at
