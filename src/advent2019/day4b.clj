@@ -4,7 +4,7 @@
 ;;;;
 ;;;; Secure Container
 ;;;;
-(ns day4a.ns
+(ns day4b.ns
   (:require [clojure.string :as str]))
 
 (def puzzle-input [178416 676461])
