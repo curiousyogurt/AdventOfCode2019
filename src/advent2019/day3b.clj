@@ -132,7 +132,7 @@
 ;;;
 (defn steps
   [path coordinate]
-  (count (drop-while (fn [n] (not (= n coordinate))) path)))
+  (count (drop-while #(not= % coordinate) path)))
 
 ;;;
 ;;; This function does the heavy lifting for the problem.  Given a pair of
