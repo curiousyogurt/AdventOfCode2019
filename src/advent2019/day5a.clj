@@ -4,6 +4,7 @@
 ;;;;
 ;;;; Sunny with a Chance of Asteroids
 ;;;;
+(ns day1a.ns)
 
 ;;;
 ;;; Load in the data for the problem as a vector
