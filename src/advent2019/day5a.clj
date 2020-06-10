@@ -1,10 +1,9 @@
-;;;;
 ;;;; Advent of Code 2019: Day 5, Part 1
 ;;;; https://adventofcode.com/2019/day/5
 ;;;;
 ;;;; Sunny with a Chance of Asteroids
 ;;;;
-(ns day1a.ns)
+(ns day5a.ns)
 
 ;;;
 ;;; Load in the data for the problem as a vector
@@ -16,8 +15,8 @@
 ;;;
 ;;; Arbitrary assicgnment of input and output, according to puzzle.
 ;;;
-(def input 1)
-(def output 1)
+(defn input [] 1)
+(defn output [] 1)
 
 ;;;
 ;;; Given the opcode, return the operation as a function.  These are arbitrary,
@@ -28,8 +27,8 @@
   (cond
     (= opcode 1) +
     (= opcode 2) *
-    (= opcode 3) (fn [n] input)
-    (= opcode 4) (fn [n] output)
+    (= opcode 3) input
+    (= opcode 4) output
     :else nil))
 
 ;;;
@@ -81,6 +80,18 @@
    :second-parameter (first (next parameters))
    :third-parameter (first (next (next parameters)))})
 
+(defn get-values
+  [intcode operation parameters]
+  {:first-value (if (zero? (:first-parameter-mode operation))
+                  (get intcode (:first-parameter parameters))
+                  (:first-parameter parameters))
+   :second-value (if (zero? (:second-parameter-mode operation))
+                   (get intcode (:second-parameter parameters))
+                   (:second-parameter parameters))
+  :third-value (if (zero? (:third-parameter-mode operation))
+                  (get intcode (:third-parameter parameters))
+                  (:third-parameter parameters))})
+
 ;;;
 ;;; Given the intcode and a position, return a map of the instruction (opcode,
 ;;; number of parameters, mode for first/second/third parameters and the first/
@@ -89,30 +100,34 @@
 (defn instruction
   [intcode position]
   (let [operation (parse-operation (nth intcode position))
-        parameters (parse-parameters (subvec intcode (inc position) (+ (inc position) (:parameters operation))))]
-    (into operation parameters)))
+        parameters (parse-parameters
+                     (subvec intcode (inc position) (+ (inc position) (:parameters operation))))
+        values (get-values intcode operation parameters)]
+    (into operation (into parameters values))))
 
-;(instruction [1101,100,-1,4,0] 0)
+(:parameters (instruction [1001,4,3,4,33] 0))
 
-;;; TODO: Finish Day 5.  Below is from Day 2.
-
-;;;
-;;; Pull an individual instruction (4 integers) from the intcode, starting at
-;;; position.  The pattern is:
-;;;
-;;;   1: opcode (submit to op to get a function)
-;;;   2: position in intcode of first value
-;;;   3: position in intcode of second value
-;;;   4: position for output
-;;;
 (defn execute
   [intcode position]
-  (let [operation (op intcode position)
-        val1 (get intcode (get intcode (+ position 1)))
-        val2 (get intcode (get intcode (+ position 2)))
-        out (get intcode (+ position 3))]
-    (when-not (nil? operation)
-      (assoc intcode out (operation val1 val2)))))
+  (let [instruction (instruction intcode position)] 
+    (cond
+      (= (:opcode instruction) 1)
+      (assoc intcode (:third-parameter instruction)
+             ((op (:opcode instruction)) (:first-value instruction) (:second-value instruction)))
+      (= (:opcode instruction) 2)
+      (assoc intcode (:third-parameter instruction)
+             ((op (:opcode instruction)) (:first-value instruction) (:second-value instruction)))
+      (= (:opcode instruction) 3)
+      (assoc intcode (:first-parameter instruction)
+             1)
+      (= (:opcode instruction) 4)
+      (println (nth intcode (:first-parameter instruction)))
+      (= (:opcode instruction) 99)
+      (println "halt"))))
+
+(execute [1101,100,-1,4,0] 0)
+(execute [1002,4,3,4,33] 0)
+(execute [4,0,4,0,99] 0)
 
 ;;;
 ;;; Run the intcode.  Do this by starting at specified position.  If we get nil
@@ -123,19 +138,22 @@
   [intcode position]
   (loop [intcode intcode
          position position]
-    (let [result (execute intcode position)]
+    (let [result (execute intcode position)
+          jump (inc (:parameters (instruction intcode position)))]
       (if (nil? result)
         intcode
-        (recur result (+ position 4))))))
+        (recur result (+ position jump))))))
+
+(println (run input-data 0))
 
 ;;;
 ;;; Prep the intcode by replacing position 1 with the value 12, and position
 ;;; 2 with the value 2.
 ;;;
-(defn prep [intcode]
-  (assoc (assoc intcode 1 12) 2 2))
+;(defn prep [intcode]
+  ;(assoc (assoc intcode 1 12) 2 2))
 
 ;;;
 ;;; Run the intcode starting at position 0, and return the value at position 0.
 ;;;
-(first (run (prep input-data) 0))
+;(first (run (prep input-data) 0))
