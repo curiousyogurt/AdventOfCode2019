@@ -10,39 +10,78 @@
 ;;;
 (def input-data
   (mapv read-string
-        (re-seq #"[\d.]+" (slurp "resources/day5.txt"))))
+        (re-seq #"-?[\d.]+" (slurp "resources/day5.txt"))))
 
 ;;;
-;;; Arbitrary assicgnment of input and output, according to puzzle.
+;;; Arbitrary assignment of input value, according to puzzle description.
 ;;;
-(defn input [] 1)
-(defn output [] 1)
+(def input 1)
 
 ;;;
-;;; Given the opcode, return the operation as a function.  These are arbitrary,
-;;; so `cond` is appropriate.
+;;; Below are the implementations of the opcodes defined for this puzzle.
+;;; Each returns a map with three values:
+;;;   intcode: The intcode after the opertaion
+;;;   position: The position of the pointer after the operation
+;;;   halt: Whether to halt or not (as a boolean)
 ;;;
-(defn op
-  [opcode]
-  (cond
-    (= opcode 1) +
-    (= opcode 2) *
-    (= opcode 3) input
-    (= opcode 4) output
-    :else nil))
+
+;; "Opcode 1 adds together numbers read from two positions and stores the result
+;; in a third position."
+(defn opcode-1
+  [intcode position instruction]
+  {:intcode (assoc intcode
+                   (:third-parameter instruction)
+                   (+ (:first-value instruction) (:second-value instruction)))
+   :position (+ position 4)
+   :halt false})
+
+;; "Opcode 2 works exactly like opcode 1, except it multiplies the two inputs
+;; instead of adding them."
+(defn opcode-2
+  [intcode position instruction]
+  {:intcode (assoc intcode
+                   (:third-parameter instruction)
+                   (* (:first-value instruction) (:second-value instruction)))
+   :position (+ position 4)
+   :halt false})
+
+;; "Opcode 3 takes a single integer as input and saves it to the position given
+;; by its only parameter."
+(defn opcode-3
+  [intcode position instruction]
+  {:intcode (assoc intcode
+                   (:first-parameter instruction)
+                   input)
+   :position (+ position 2)
+   :halt false})
+
+;; "Opcode 4 outputs the value of its only parameter."
+(defn opcode-4
+  [intcode position instruction]
+  (println (:first-value instruction))
+  {:intcode intcode
+   :position (+ position 2)
+   :halt false})
+
+;; "[Opcode] 99 means that the program is finished and should immediately halt."
+(defn opcode-99
+  [intcode position]
+  {:intcode intcode
+   :position position
+   :halt true})
 
 ;;;
-;;; Return the number of parameters requried for a given opcode.  These are
-;;; arbitrary, and so `cond` is appropriate.
+;;; Return the number of parameters expected for a given opcode.
 ;;;
 (defn parameters
   [opcode]
-    (cond
-      (= opcode 1) 3
-      (= opcode 2) 3
-      (= opcode 3) 1
-      (= opcode 4) 1
-      :else nil))
+  (cond
+    (= opcode 1) 3
+    (= opcode 2) 3
+    (= opcode 3) 1
+    (= opcode 4) 1
+    (= opcode 99) 0
+    :else nil))
 
 ;;;
 ;;; Given the intcode and a position, return a map of the opcode, the number
@@ -80,6 +119,11 @@
    :second-parameter (first (next parameters))
    :third-parameter (first (next (next parameters)))})
 
+;;;
+;;; Given the incode, operation, and parameters, pull in the values for each
+;;; paramater, as appropriate, depending on whether the parameter mode is
+;;; immediate (0) or position (1)
+;;;
 (defn get-values
   [intcode operation parameters]
   {:first-value (if (zero? (:first-parameter-mode operation))
@@ -88,7 +132,7 @@
    :second-value (if (zero? (:second-parameter-mode operation))
                    (get intcode (:second-parameter parameters))
                    (:second-parameter parameters))
-  :third-value (if (zero? (:third-parameter-mode operation))
+   :third-value (if (zero? (:third-parameter-mode operation))
                   (get intcode (:third-parameter parameters))
                   (:third-parameter parameters))})
 
@@ -97,63 +141,41 @@
 ;;; number of parameters, mode for first/second/third parameters and the first/
 ;;; second/third parameters.
 ;;;
-(defn instruction
+(defn parse-instruction
   [intcode position]
   (let [operation (parse-operation (nth intcode position))
         parameters (parse-parameters
-                     (subvec intcode (inc position) (+ (inc position) (:parameters operation))))
+                     (subvec intcode (inc position)
+                             (+ (inc position) (:parameters operation))))
         values (get-values intcode operation parameters)]
     (into operation (into parameters values))))
 
-(:parameters (instruction [1001,4,3,4,33] 0))
-
-(defn execute
+;;;
+;;; Execute a single instruction by calling the corresponding opcode-x function.
+;;;
+(defn execute-instruction
   [intcode position]
-  (let [instruction (instruction intcode position)] 
-    (cond
-      (= (:opcode instruction) 1)
-      (assoc intcode (:third-parameter instruction)
-             ((op (:opcode instruction)) (:first-value instruction) (:second-value instruction)))
-      (= (:opcode instruction) 2)
-      (assoc intcode (:third-parameter instruction)
-             ((op (:opcode instruction)) (:first-value instruction) (:second-value instruction)))
-      (= (:opcode instruction) 3)
-      (assoc intcode (:first-parameter instruction)
-             1)
-      (= (:opcode instruction) 4)
-      (println (nth intcode (:first-parameter instruction)))
-      (= (:opcode instruction) 99)
-      (println "halt"))))
-
-(execute [1101,100,-1,4,0] 0)
-(execute [1002,4,3,4,33] 0)
-(execute [4,0,4,0,99] 0)
+  (let [instruction (parse-instruction intcode position)
+        result (cond
+                 (= (:opcode instruction) 1) (opcode-1 intcode position instruction)
+                 (= (:opcode instruction) 2) (opcode-2 intcode position instruction)
+                 (= (:opcode instruction) 3) (opcode-3 intcode position instruction)
+                 (= (:opcode instruction) 4) (opcode-4 intcode position instruction)
+                 (= (:opcode instruction) 99) (opcode-99 intcode position))]
+    {:intcode (:intcode result)
+     :position (inc (+ position (:parameters instruction)))
+     :halt (:halt result)}))
 
 ;;;
-;;; Run the intcode.  Do this by starting at specified position.  If we get nil
-;;; as a result, either we have hit opcode 99 (halt), or we have an unknown
-;;; opcode; halt in either case.  Step through intcode 4 positions at a time.
+;;; Begininng at position 0, step through the intcode, one instruction at a time.
 ;;;
 (defn run
-  [intcode position]
+  [intcode]
   (loop [intcode intcode
-         position position]
-    (let [result (execute intcode position)
-          jump (inc (:parameters (instruction intcode position)))]
-      (if (nil? result)
-        intcode
-        (recur result (+ position jump))))))
+         position 0]
+    (let [result (execute-instruction intcode position)]
+      (if-not (:halt result)
+        (recur (:intcode result) (:position result))
+        'halt))))
 
-(println (run input-data 0))
-
-;;;
-;;; Prep the intcode by replacing position 1 with the value 12, and position
-;;; 2 with the value 2.
-;;;
-;(defn prep [intcode]
-  ;(assoc (assoc intcode 1 12) 2 2))
-
-;;;
-;;; Run the intcode starting at position 0, and return the value at position 0.
-;;;
-;(first (run (prep input-data) 0))
+(run input-data)
