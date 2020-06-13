@@ -139,7 +139,8 @@
 ;;;
 ;;; Given the intcode and a position, return a map of the instruction (opcode,
 ;;; number of parameters, mode for first/second/third parameters and the first/
-;;; second/third parameters.
+;;; second/third parameters.  Importantly, this function calls parse-operation,
+;;; parse-parameters, and get-values.
 ;;;
 (defn parse-instruction
   [intcode position]
