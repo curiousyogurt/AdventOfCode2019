@@ -71,7 +71,7 @@
 ;;;      C       4         1      output
 ;;;      D       5,6       2      conditional jump
 ;;;      E       7,8       3      predicate evaluation
-;;;      Z       9         0      halt
+;;;      Z       99        0      halt
 ;;;
 
 (defn opcode-type-A
