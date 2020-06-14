@@ -114,26 +114,27 @@
 
 ;; "[Opcode] 99 means that the program is finished and should immediately halt."
 (defn opcode-99
-  [intcode position]
+  [intcode position _]
   {:intcode intcode
    :position position
    :halt true})
 
 ;;;
-;;; Return the number of parameters expected for a given opcode.
+;;; Set the function (to be called later, in `execute-insturuction`) and the
+;;; number of parameters for the instruction.
 ;;;
-(defn parameters
+(defn opcode-function
   [opcode]
   (cond
-    (= opcode 1) 3
-    (= opcode 2) 3
-    (= opcode 3) 1
-    (= opcode 4) 1
-    (= opcode 5) 2
-    (= opcode 6) 2
-    (= opcode 7) 3
-    (= opcode 8) 3
-    (= opcode 99) 0
+    (= opcode 1) {:function opcode-1 :parameters 3}
+    (= opcode 2) {:function opcode-2 :parameters 3}
+    (= opcode 3) {:function opcode-3 :parameters 1}
+    (= opcode 4) {:function opcode-4 :parameters 1}
+    (= opcode 5) {:function opcode-5 :parameters 2}
+    (= opcode 6) {:function opcode-6 :parameters 2}
+    (= opcode 7) {:function opcode-7 :parameters 3}
+    (= opcode 8) {:function opcode-8 :parameters 3}
+    (= opcode 99) {:function opcode-99 :parameters 0}
     :else nil))
 
 ;;;
@@ -144,7 +145,7 @@
 ;;;
 ;;; `op`: split the operation into a vector of individual digits
 ;;; `last-op`: pick out the last two digits of op
-;;; `opcode`: convert last-op to an integer
+;;; `function`: sets function that corresponds to op
 ;;; `coerce`: (fn) corverts a nil parameter to 0
 ;;;
 ;;; The output of this function is a map with the parsed operation.  use this
@@ -155,9 +156,10 @@
   (let [op (mapv #(- (int %) (int \0)) (str operation))
         last-op (str (last (butlast op)) (last op))
         opcode (Integer/parseInt (first (re-find #"(\d){1,2}$" last-op)))
+        function (opcode-function opcode)
         coerce #(if (nil? %) 0 %)]
-    {:opcode opcode
-     :parameters (parameters opcode)
+    {:function (:function function)
+     :parameters (:parameters function)
      :first-parameter-mode (coerce (last (butlast (butlast op))))
      :second-parameter-mode (coerce (last (butlast (butlast (butlast op)))))
      :third-parameter-mode (coerce (last (butlast (butlast (butlast (butlast op))))))}))
@@ -206,20 +208,15 @@
 
 ;;;
 ;;; Execute a single instruction by calling the corresponding opcode-x function.
+;;; To generate result, call (:function instruction), which is the function we
+;;; need to call previously assigned by opcode-function.  This relieves us of
+;;; the requirement to embed a condition that explicitly calls different
+;;; functions.
 ;;;
 (defn execute-instruction
   [intcode position]
   (let [instruction (parse-instruction intcode position)
-        result (cond
-                 (= (:opcode instruction) 1) (opcode-1 intcode position instruction)
-                 (= (:opcode instruction) 2) (opcode-2 intcode position instruction)
-                 (= (:opcode instruction) 3) (opcode-3 intcode position instruction)
-                 (= (:opcode instruction) 4) (opcode-4 intcode position instruction)
-                 (= (:opcode instruction) 5) (opcode-5 intcode position instruction)
-                 (= (:opcode instruction) 6) (opcode-6 intcode position instruction)
-                 (= (:opcode instruction) 7) (opcode-7 intcode position instruction)
-                 (= (:opcode instruction) 8) (opcode-8 intcode position instruction)
-                 (= (:opcode instruction) 99) (opcode-99 intcode position))]
+        result ((:function instruction) intcode position instruction)]
     {:intcode (:intcode result)
      :position (:position result)
      :halt (:halt result)}))
