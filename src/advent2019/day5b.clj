@@ -65,7 +65,7 @@
 ;;; functions they implement, as follows:
 ;;;
 ;;; Opcode-Type Opcode Parameters Description
-;;; ----------- ------ ---------- -----------
+;;; ----------- ------ ---------- ------------------------------
 ;;;      A       1,2       3      arithmetic function evaluation
 ;;;      B       3         1      input
 ;;;      C       4         1      output
