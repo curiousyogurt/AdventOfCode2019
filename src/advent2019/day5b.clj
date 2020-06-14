@@ -19,122 +19,137 @@
 (def input 5)
 
 ;;;
+;;; Opcodes and Abstractions
+;;; ------------------------
+;;;
 ;;; Below are the implementations of the opcodes defined for this puzzle.
 ;;; Each returns a map with three values:
 ;;;   intcode: The intcode after the opertaion
 ;;;   position: The position of the pointer after the operation
 ;;;   halt: Whether to halt or not (as a boolean)
 ;;;
+;;; Here is a description of the opcodes, directly from the puzzle
+;;; descriptions:
+;;;
+;;;   "Opcode 1 adds together numbers read from two positions and stores the
+;;;   result in a third position."
+;;;
+;;;   "Opcode 2 works exactly like opcode 1, except it multiplies the two inputs
+;;;   instead of adding them."
+;;;
+;;;   "Opcode 3 takes a single integer as input and saves it to the position
+;;;   given by its only parameter."
+;;;
+;;;   "Opcode 4 outputs the value of its only parameter."
+;;;
+;;;   "Opcode 5 is jump-if-true: if the first parameter is non-zero, it sets the
+;;;   instruction pointer to the value from the second parameter. Otherwise, it
+;;;   does nothing."
+;;;
+;;;   "Opcode 6 is jump-if-false: if the first parameter is zero, it sets the
+;;;   instruction pointer to the value from the second parameter. Otherwise, it
+;;;   does nothing."
+;;;
+;;;   "Opcode 7 is less than: if the first parameter is less than the second
+;;;   parameter, it stores 1 in the position given by the third parameter.
+;;;   Otherwise, it stores 0."
+;;;
+;;;   "Opcode 8 is equals: if the first parameter is equal to the second
+;;;   parameter, it stores 1 in the position given by the third parameter.
+;;;   Otherwise, it stores 0."
+;;;
+;;;   "[Opcode] 99 means that the program is finished and should immediately
+;;;   halt."
+;;;
+;;; The opcodes can be abstracted into types, according to the forms of the
+;;; functions they implement, as follows:
+;;;
+;;; Opcode-Type Opcode Parameters Description
+;;; ----------- ------ ---------- -----------
+;;;      A       1,2       3      arithmetic function evaluation
+;;;      B       3         1      input
+;;;      C       4         1      output
+;;;      D       5,6       2      conditional jump
+;;;      E       7,8       3      predicate evaluation
+;;;      Z       9         0      halt
+;;;
 
-;; "Opcode 1 adds together numbers read from two positions and stores the result
-;; in a third position."
-(defn opcode-1
+(defn opcode-type-A
   [intcode position instruction]
   {:intcode (assoc intcode
                    (:third-parameter instruction)
-                   (+ (:first-value instruction) (:second-value instruction)))
-   :position (+ position 4)
+                   ((:operation-function instruction)
+                    (:first-value instruction) (:second-value instruction)))
+   :position (+ position (inc (:parameters instruction)))
    :halt false})
 
-;; "Opcode 2 works exactly like opcode 1, except it multiplies the two inputs
-;; instead of adding them."
-(defn opcode-2
-  [intcode position instruction]
-  {:intcode (assoc intcode
-                   (:third-parameter instruction)
-                   (* (:first-value instruction) (:second-value instruction)))
-   :position (+ position 4)
-   :halt false})
-
-;; "Opcode 3 takes a single integer as input and saves it to the position given
-;; by its only parameter."
-(defn opcode-3
+(defn opcode-type-B
   [intcode position instruction]
   {:intcode (assoc intcode
                    (:first-parameter instruction)
                    input)
-   :position (+ position 2)
+   :position (+ position (inc (:parameters instruction)))
    :halt false})
 
-;; "Opcode 4 outputs the value of its only parameter."
-(defn opcode-4
+(defn opcode-type-C
   [intcode position instruction]
   (println (:first-value instruction))
   {:intcode intcode
-   :position (+ position 2)
+   :position (+ position (inc (:parameters instruction)))
    :halt false})
 
-;; "Opcode 5 is jump-if-true: if the first parameter is non-zero, it sets the
-;; instruction pointer to the value from the second parameter. Otherwise, it
-;; does nothing."
-(defn opcode-5
+(defn opcode-type-D
   [intcode position instruction]
   {:intcode intcode
-   :position (if-not (zero? (:first-value instruction))
+   :position (if ((:operation-function instruction)
+                  (:first-value instruction))
                (:second-value instruction)
-               (+ position 3))
+               (+ position (inc (:parameters instruction))))
    :halt false})
 
-;; "Opcode 6 is jump-if-false: if the first parameter is zero, it sets the
-;; instruction pointer to the value from the second parameter. Otherwise, it
-;; does nothing."
-(defn opcode-6
-  [intcode position instruction]
-  {:intcode intcode
-   :position (if (zero? (:first-value instruction))
-              (:second-value instruction)
-              (+ position 3))
-   :halt false})
-
-;; "Opcode 7 is less than: if the first parameter is less than the second
-;; parameter, it stores 1 in the position given by the third parameter.
-;; Otherwise, it stores 0. ""
-(defn opcode-7
+(defn opcode-type-E
   [intcode position instruction]
   {:intcode (assoc intcode
                    (:third-parameter instruction)
-                   (if (< (:first-value instruction)
-                          (:second-value instruction))
-                          1 0))
-   :position (+ position 4)
+                   (if ((:operation-function instruction)
+                        (:first-value instruction)
+                        (:second-value instruction))
+                        1 0))
+   :position (+ position (inc (:parameters instruction)))
    :halt false})
 
-;; "Opcode 8 is equals: if the first parameter is equal to the second parameter,
-;; it stores 1 in the position given by the third parameter. Otherwise, it
-;; stores 0. ""
-(defn opcode-8
-  [intcode position instruction]
-  {:intcode (assoc intcode
-                   (:third-parameter instruction)
-                   (if (= (:first-value instruction)
-                          (:second-value instruction))
-                          1 0))
-   :position (+ position 4)
-   :halt false})
-
-;; "[Opcode] 99 means that the program is finished and should immediately halt."
-(defn opcode-99
+(defn opcode-type-Z
   [intcode position _]
   {:intcode intcode
    :position position
    :halt true})
 
 ;;;
-;;; Set the function (to be called later, in `execute-insturuction`) and the
-;;; number of parameters for the instruction.
+;;; Set the opcode-type (to be called later by `execute instruction`), the
+;;; number of parameters, and the operation-function that gets supplied to
+;;; the opcode-type-* function.
 ;;;
 (defn opcode-function
   [opcode]
   (cond
-    (= opcode 1) {:function opcode-1 :parameters 3}
-    (= opcode 2) {:function opcode-2 :parameters 3}
-    (= opcode 3) {:function opcode-3 :parameters 1}
-    (= opcode 4) {:function opcode-4 :parameters 1}
-    (= opcode 5) {:function opcode-5 :parameters 2}
-    (= opcode 6) {:function opcode-6 :parameters 2}
-    (= opcode 7) {:function opcode-7 :parameters 3}
-    (= opcode 8) {:function opcode-8 :parameters 3}
-    (= opcode 99) {:function opcode-99 :parameters 0}
+    (= opcode 1)
+    {:function opcode-type-A :parameters 3 :operation-function +}
+    (= opcode 2)
+    {:function opcode-type-A :parameters 3 :operation-function *}
+    (= opcode 3)
+    {:function opcode-type-B :parameters 1}
+    (= opcode 4)
+    {:function opcode-type-C :parameters 1}
+    (= opcode 5)
+    {:function opcode-type-D :parameters 2 :operation-function #(not (zero? %))}
+    (= opcode 6)
+    {:function opcode-type-D :parameters 2 :operation-function zero?}
+    (= opcode 7)
+    {:function opcode-type-E :parameters 3 :operation-function <}
+    (= opcode 8)
+    {:function opcode-type-E :parameters 3 :operation-function =}
+    (= opcode 99)
+    {:function opcode-type-Z :parameters 0}
     :else nil))
 
 ;;;
@@ -160,6 +175,7 @@
         coerce #(if (nil? %) 0 %)]
     {:function (:function function)
      :parameters (:parameters function)
+     :operation-function (:operation-function function)
      :first-parameter-mode (coerce (last (butlast (butlast op))))
      :second-parameter-mode (coerce (last (butlast (butlast (butlast op)))))
      :third-parameter-mode (coerce (last (butlast (butlast (butlast (butlast op))))))}))
@@ -233,4 +249,7 @@
         (recur (:intcode result) (:position result))
         'halt))))
 
+;;;
+;;; Run the intcode program.  Any outputs are the result of opcode-4.
+;;;
 (run input-data)
