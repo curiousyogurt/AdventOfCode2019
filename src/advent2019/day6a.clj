@@ -34,14 +34,23 @@
 ;;;  \
 ;;;   F - G
 ;;;
-(def example2 (groom-data
-               "COM)B\nCOM)C\nC)D\nD)E\nCOM)F\nF)G"))
+(def example2 (groom-data "COM)B\nCOM)C\nC)D\nD)E\nCOM)F\nF)G"))
 
 ;;;
 ;;; COM - B - C - D
 ;;;
-(def example3 (groom-data
-               "COM)B\nB)C\nC)D"))
+(def example3 (groom-data "COM)B\nB)C\nC)D"))
+
+;;;
+;;;         C
+;;;        /
+;;; COM - B
+;;;        \
+;;;         D
+;;;
+(def example4 (groom-data "COM)B\nB)C\nB)D"))
+
+
 ;;;
 ;;; Create a list of immediate descendants for a given node.  If there are no
 ;;; descendants, return `nil`.
@@ -105,3 +114,51 @@
       (branch node (map subtree children))
       (leaf node))))
 
+;;;
+;;; Given a tree, returns a list of all the proper subtrees.  "Proper" because
+;;; the original tree is not included in the list.  We do this by maintaining
+;;; a list of trees.  Everytime we generate a subtree, we copy that subtree
+;;; into `results`; and if that subtree is not just a list of leaves, we also
+;;; add the subtree to the list of trees to be processed.  Thus, we end up with
+;;; a recursively generated list of subtrees in `results`.
+;;;
+;;; Two functions are used to make this work:
+;;;   subtree - Given a list, if the first element is a keyword (indicating a
+;;;             branch instead of a list of leaves), return everything after
+;;;             the keyword; otherwise, return nil.
+;;;   leaf?   — This function returns true if the given subtree is a list of one
+;;;             or more leaves; otherwise it returns false.
+;;;
+(defn subtrees
+  [tree]
+  (loop [trees tree
+         results '()]
+    (if (empty? trees)
+      results
+      (let [subtree #(if (keyword? (first %)) (rest %) nil)
+            leaf? #(and (list %) (keyword? (first %)) (= (count %) 1))
+            sub (subtree (first trees))]
+        (if (every? leaf? sub)
+          (recur (rest trees) (into results sub))
+          (recur (into (rest trees) sub) (into results sub)))))))
+
+;;;
+;;; Some example trees to play with (substitute for "input" below).
+;;;
+(def t1 (tree example1 :COM))
+(def t2 (tree example2 :COM))
+(def t3 (tree example3 :COM))
+(def t4 (tree example4 :COM))
+(def c1 (tree (groom-data "A)B\nA)C") :A))
+(def c2 (tree (groom-data "D)E") :D))
+(def c3 (tree (groom-data "G)H\nH)I") :G))
+(def c4 (tree (groom-data "J)K\nJ)M\nK)L\nM)N") :J))
+
+;;;
+;;; Calculate the results.  Do this is three steps.  First, create a tree from
+;;; an association list.  Second, generate all the subtrees for the generated
+;;; tree.  Third, flatten and count the elements.  This will be equal to the
+;;; number of direct and indirect orbits.
+;;;
+(def input (tree input-data :COM))
+(count (flatten (subtrees (list input))))
