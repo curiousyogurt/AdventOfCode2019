@@ -18,38 +18,65 @@
 (def input-data (groom-data (slurp "resources/day6.txt")))
 
 ;;;
-;;;        G - H       J - K - L
-;;;        /           /
-;;; COM - B - C - D - E - F
-;;;                \
-;;;                 I
-;;;
+;;; Examples 1 through 7.  Example 1 is from the puzzle description; I found
+;;; 2 through 7 useful for exploring how the functions interact with each
+;;; other.
+
+;;
+;;        G - H       J - K - L
+;;        /           /
+;; COM - B - C - D - E - F
+;;                \
+;;                 I
+;;
 (def example1 (groom-data
                "COM)B\nB)C\nC)D\nD)E\nE)F\nB)G\nG)H\nD)I\nE)J\nJ)K\nK)L"))
 
-;;;
-;;;   C - D - E
-;;;  /
-;;; COM - B
-;;;  \
-;;;   F - G
-;;;
+;;
+;;   C - D - E
+;;  /
+;; COM - B
+;;  \
+;;   F - G
+;;
 (def example2 (groom-data "COM)B\nCOM)C\nC)D\nD)E\nCOM)F\nF)G"))
 
-;;;
-;;; COM - B - C - D
-;;;
+;;
+;; COM - B - C - D
+;;
 (def example3 (groom-data "COM)B\nB)C\nC)D"))
 
-;;;
-;;;         C
-;;;        /
-;;; COM - B
-;;;        \
-;;;         D
-;;;
+;;
+;;         C
+;;        /
+;; COM - B
+;;        \
+;;         D
+;;
 (def example4 (groom-data "COM)B\nB)C\nB)D"))
 
+;;
+;;     B
+;;    /
+;; COM
+;;    \
+;;     C
+;;
+(def example5 (groom-data "COM)B\nCOM)C"))
+
+;;
+;; COM - B
+;;
+(def example6 (groom-data "COM)B"))
+
+;;
+;;     B - D
+;;    /
+;; COM
+;;    \
+;;     C
+;;
+(def example7 (groom-data "COM)B\nCOM)C\nC)D"))
 
 ;;;
 ;;; Create a list of immediate descendants for a given node.  If there are no
@@ -115,6 +142,17 @@
       (leaf node))))
 
 ;;;
+;;; Generate trees from examples; any may be used in place of `input`
+;;;
+(def te1 (tree example1 :COM))
+(def te2 (tree example2 :COM))
+(def te3 (tree example3 :COM))
+(def te4 (tree example4 :COM))
+(def te5 (tree example5 :COM))
+(def te6 (tree example6 :COM))
+(def te7 (tree example7 :COM))
+
+;;;
 ;;; Given a tree, returns a list of all the proper subtrees.  "Proper" because
 ;;; the original tree is not included in the list.  We do this by maintaining
 ;;; a list of trees.  Everytime we generate a subtree, we copy that subtree
@@ -141,18 +179,6 @@
         (if (every? leaf? sub)
           (recur (rest trees) (into results sub))
           (recur (into (rest trees) sub) (into results sub)))))))
-
-;;;
-;;; Some example trees to play with (substitute for "input" below).
-;;;
-(def t1 (tree example1 :COM))
-(def t2 (tree example2 :COM))
-(def t3 (tree example3 :COM))
-(def t4 (tree example4 :COM))
-(def c1 (tree (groom-data "A)B\nA)C") :A))
-(def c2 (tree (groom-data "D)E") :D))
-(def c3 (tree (groom-data "G)H\nH)I") :G))
-(def c4 (tree (groom-data "J)K\nJ)M\nK)L\nM)N") :J))
 
 ;;;
 ;;; Calculate the results.  Do this is three steps.  First, create a tree from
